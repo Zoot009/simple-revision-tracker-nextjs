@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { toast } from 'sonner'
+
 const formSchema = z.object({
   clientName: z.string().min(1, 'Client name is required'),
   orderId: z.string().min(1, 'Order ID is required'),
@@ -24,7 +25,6 @@ type FormData = z.infer<typeof formSchema>
 export function AddOrderForm() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
- 
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -55,13 +55,11 @@ export function AddOrderForm() {
       }
 
       toast.success("Order created successfully")
- 
 
       form.reset()
       router.refresh()
     } catch (error) {
-     toast.error("Failed to create order")
-   
+      toast.error("Failed to create order")
     } finally {
       setIsLoading(false)
     }
@@ -122,9 +120,15 @@ export function AddOrderForm() {
                 <Input 
                   type="number" 
                   step="0.01" 
+                  min="0"
                   placeholder="0.00" 
-                  {...field} 
-                  onChange={e => field.onChange(parseFloat(e.target.value) || 0)}
+                  value={field.value || ''} 
+                  onChange={(e) => {
+                    const value = e.target.value
+                    // Convert to number, or set to 0 if empty/invalid
+                    const numValue = value === '' ? 0 : parseFloat(value)
+                    field.onChange(isNaN(numValue) ? 0 : numValue)
+                  }}
                 />
               </FormControl>
               <FormMessage />
