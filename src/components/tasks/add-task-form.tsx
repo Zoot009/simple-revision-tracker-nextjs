@@ -61,8 +61,9 @@ export function AddTaskForm({ orders, onSuccess }: AddTaskFormProps) {
 
       form.reset()
       onSuccess?.()
-    } catch (error) {
-      toast.error("Failed to create task") // Fixed: was showing success on error
+    } catch (err) {
+      console.error('Failed to create task:', err)
+      toast.error("Failed to create task")
     } finally {
       setIsLoading(false)
     }

@@ -40,9 +40,9 @@ export function TasksSection({ tasks, orders }: TasksSectionProps) {
      toast.success("Task marked as completed")
      
       router.refresh()
-    } catch (error) {
+    } catch (err) {
+      console.error('Failed to complete task:', err)
       toast.error("Failed to complete task")
-   
     } finally {
       setLoadingTasks(prev => ({ ...prev, [taskId]: false }))
     }
@@ -78,7 +78,7 @@ export function TasksSection({ tasks, orders }: TasksSectionProps) {
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
             <Clock className="h-5 w-5 mr-2" />
-            What's Next
+            What&apos;s Next
           </div>
           <Button
             onClick={() => setShowAddForm(!showAddForm)}

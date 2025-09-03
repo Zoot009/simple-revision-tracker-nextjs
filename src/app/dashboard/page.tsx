@@ -5,15 +5,15 @@ import { AddOrderForm } from '@/components/orders/add-order-form'
 import { MeetingsSection } from '@/components/dashboard/meetings-section'
 import { TasksSection } from '@/components/dashboard/tasks-section'
 import { OrdersSection } from '@/components/dashboard/orders-section'
-import { format } from 'date-fns'
 import type { OrderWithTasks, TaskWithOrder } from '@/types'
+import type { Order, Task } from '@prisma/client'
 
 // Helper function to serialize Prisma data for client components
-function serializeOrders(orders: any[]): OrderWithTasks[] {
+function serializeOrders(orders: (Order & { tasks: Task[] })[]): OrderWithTasks[] {
   return orders.map(order => ({
     ...order,
     amount: Number(order.amount), // Convert Decimal to number
-    tasks: order.tasks.map((task: any) => ({
+    tasks: order.tasks.map((task: Task) => ({
       ...task,
       deadline: task.deadline,
       createdAt: task.createdAt,
@@ -26,7 +26,7 @@ function serializeOrders(orders: any[]): OrderWithTasks[] {
   }))
 }
 
-function serializeTasks(tasks: any[]): TaskWithOrder[] {
+function serializeTasks(tasks: (Task & { order: Order | null })[]): TaskWithOrder[] {
   return tasks.map(task => ({
     ...task,
     deadline: task.deadline,
@@ -62,7 +62,6 @@ async function getDashboardData() {
   const tasks = serializeTasks(tasksRaw)
 
   const currentTime = new Date()
-  const today = format(currentTime, 'yyyy-MM-dd')
   
   let overdueMessages = 0
   orders.forEach(order => {

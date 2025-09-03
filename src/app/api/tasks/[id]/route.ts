@@ -10,10 +10,10 @@ const updateTaskSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const taskId = params.id
+    const { id: taskId } = await params
     const body = await request.json()
     const validatedData = updateTaskSchema.parse(body)
 
@@ -26,7 +26,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
-    const updateData: any = {}
+    const updateData: {
+      completed?: boolean
+      description?: string
+      deadline?: Date
+      completedAt?: Date
+    } = {}
     
     if (validatedData.completed !== undefined) {
       updateData.completed = validatedData.completed
@@ -53,7 +58,7 @@ export async function PATCH(
     console.error('Error updating task:', error)
     
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid data', details: error.errors }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid data', details: error}, { status: 400 })
     }
 
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -62,10 +67,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const taskId = params.id
+    const { id: taskId } = await params
 
     // Check if task exists
     const task = await prisma.task.findUnique({

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
 import { Calendar, Clock, AlertTriangle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -38,7 +37,8 @@ export function MeetingsSection({ orders }: MeetingsSectionProps) {
       toast.success(action === "mark_done" ? 'Meeting marked as completed' : 'Meeting skipped for today')
 
       router.refresh()
-    } catch (error) {
+    } catch (err) {
+      console.error('Failed to update meeting:', err)
       toast.error('Failed to update meeting')
     } finally {
       setLoadingActions(prev => ({ ...prev, [orderId]: false }))
@@ -47,14 +47,13 @@ export function MeetingsSection({ orders }: MeetingsSectionProps) {
 
   const meetingsWithSchedule = orders.filter(order => order.meetingTime)
   const currentTime = new Date()
-  const today = format(currentTime, 'yyyy-MM-dd')
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center">
           <Calendar className="h-5 w-5 mr-2" />
-          Today's Meetings
+          Today&apos;s Meetings
         </CardTitle>
       </CardHeader>
       <CardContent>

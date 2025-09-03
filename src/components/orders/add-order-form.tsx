@@ -25,6 +25,7 @@ type FormData = z.infer<typeof formSchema>
 export function AddOrderForm() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+ 
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -55,10 +56,12 @@ export function AddOrderForm() {
       }
 
       toast.success("Order created successfully")
+ 
 
       form.reset()
       router.refresh()
-    } catch (error) {
+    } catch (err) {
+      console.error('Failed to create order:', err)
       toast.error("Failed to create order")
     } finally {
       setIsLoading(false)

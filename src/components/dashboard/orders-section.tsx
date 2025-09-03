@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatTime } from '@/lib/utils'
-import type { OrderWithTasks, Status } from '@/types'
+import type { OrderWithTasks } from '@/types'
 import { toast } from 'sonner'
 
 interface OrdersSectionProps {
@@ -41,13 +41,12 @@ export function OrdersSection({ orders }: OrdersSectionProps) {
         throw new Error('Failed to delete order')
       }
 
-
-        toast.success("Order deleted successfully")
+      toast.success("Order deleted successfully")
 
       router.refresh()
-    } catch (error) {
+    } catch (err) {
+      console.error('Failed to delete order:', err)
       toast.error("Failed to delete order")
-    
     } finally {
       setLoadingDeletes(prev => ({ ...prev, [orderId]: false }))
     }

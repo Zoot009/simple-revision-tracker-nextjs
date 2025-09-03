@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     console.error('Error creating task:', error)
     
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid data', details: error.errors }, { status: 400 })
+      return NextResponse.json({ error: 'Invalid data', details: error }, { status: 400 })
     }
 
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
