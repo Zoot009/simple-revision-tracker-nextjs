@@ -8,6 +8,10 @@ import { OrdersSection } from '@/components/dashboard/orders-section'
 import type { OrderWithTasks, TaskWithOrder } from '@/types'
 import type { Order, Task } from '@prisma/client'
 
+// Force dynamic rendering and disable caching
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // Helper function to serialize Prisma data for client components
 function serializeOrders(orders: (Order & { tasks: Task[] })[]): OrderWithTasks[] {
   return orders.map(order => ({
@@ -44,49 +48,60 @@ function serializeTasks(tasks: (Task & { order: Order | null })[]): TaskWithOrde
 }
 
 async function getDashboardData() {
-  const [ordersRaw, tasksRaw] = await Promise.all([
-    prisma.order.findMany({
-      include: { tasks: true },
-      orderBy: { createdAt: 'desc' }
-    }),
-    prisma.task.findMany({
-      where: { completed: false },
-      include: { order: true },
-      orderBy: { deadline: 'asc' },
-      take: 20
-    })
-  ])
-
-  // Serialize the data to convert Decimal types to numbers
-  const orders = serializeOrders(ordersRaw)
-  const tasks = serializeTasks(tasksRaw)
-
-  const currentTime = new Date()
+  console.log('Fetching dashboard data...')
   
-  let overdueMessages = 0
-  orders.forEach(order => {
-    if (order.meetingTime && 
-        (order.lastMeetingDate?.toDateString() !== currentTime.toDateString() || !order.meetingDoneToday)) {
-      const [hours, minutes] = order.meetingTime.split(':').map(Number)
-      const meetingTime = new Date(currentTime)
-      meetingTime.setHours(hours, minutes, 0, 0)
-      
-      const thirtyMinutesLater = new Date(meetingTime.getTime() + 30 * 60 * 1000)
-      if (currentTime > thirtyMinutesLater) {
-        overdueMessages++
+  try {
+    const [ordersRaw, tasksRaw] = await Promise.all([
+      prisma.order.findMany({
+        include: { tasks: true },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.task.findMany({
+        where: { completed: false },
+        include: { order: true },
+        orderBy: { deadline: 'asc' },
+        take: 20
+      })
+    ])
+
+    console.log(`Fetched ${ordersRaw.length} orders and ${tasksRaw.length} tasks`)
+
+    // Serialize the data to convert Decimal types to numbers
+    const orders = serializeOrders(ordersRaw)
+    const tasks = serializeTasks(tasksRaw)
+
+    const currentTime = new Date()
+    
+    let overdueMessages = 0
+    orders.forEach(order => {
+      if (order.meetingTime && 
+          (order.lastMeetingDate?.toDateString() !== currentTime.toDateString() || !order.meetingDoneToday)) {
+        const [hours, minutes] = order.meetingTime.split(':').map(Number)
+        const meetingTime = new Date(currentTime)
+        meetingTime.setHours(hours, minutes, 0, 0)
+        
+        const thirtyMinutesLater = new Date(meetingTime.getTime() + 30 * 60 * 1000)
+        if (currentTime > thirtyMinutesLater) {
+          overdueMessages++
+        }
       }
+    })
+
+    const stats = {
+      totalOrders: orders.length,
+      activeOrders: orders.filter(o => o.status === 'ACTIVE').length,
+      pendingTasks: tasks.length,
+      totalValue: orders.reduce((sum, order) => sum + order.amount, 0),
+      overdueMessages
     }
-  })
 
-  const stats = {
-    totalOrders: orders.length,
-    activeOrders: orders.filter(o => o.status === 'ACTIVE').length,
-    pendingTasks: tasks.length,
-    totalValue: orders.reduce((sum, order) => sum + order.amount, 0), // Now order.amount is a number
-    overdueMessages
+    console.log('Dashboard stats:', stats)
+
+    return { orders, tasks, stats }
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error)
+    throw error
   }
-
-  return { orders, tasks, stats }
 }
 
 export default async function DashboardPage() {
