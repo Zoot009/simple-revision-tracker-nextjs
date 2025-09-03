@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Order {
+  id                 String    @id @default(cuid())
+  clientName         String
+  orderId            String
+  projectName        String
+  amount             Decimal   @db.Decimal(10, 2)
+  status             Status    @default(ACTIVE)
+  meetingTime        String?   // Stored as HH:MM format
+  meetingDoneToday   Boolean   @default(false)
+  lastMeetingDate    DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Relations
+  tasks  Task[]
+
+  @@map("orders")
+}
+
+model Task {
+  id              String    @id @default(cuid())
+  description     String
+  deadline        DateTime
+  completed       Boolean   @default(false)
+  completedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId String?
+
+  @@map("tasks")
+}
+
+enum Status {
+  ACTIVE
+  WAITING
+  COMPLETED
+}
