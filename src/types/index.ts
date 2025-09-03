@@ -1,11 +1,17 @@
 import { Order, Task, Status } from '@prisma/client'
 
-export type OrderWithTasks = Order & {
+// Serialized version of Order for client components (Decimal converted to number)
+export type SerializedOrder = Omit<Order, 'amount'> & {
+  amount: number
+}
+
+// Serialized version of OrderWithTasks for client components
+export type OrderWithTasks = SerializedOrder & {
   tasks: Task[]
 }
 
 export type TaskWithOrder = Task & {
-  order?: Order
+  order?: SerializedOrder
 }
 
 export interface DashboardStats {
@@ -36,4 +42,8 @@ export interface MeetingAction {
   action: 'mark_done' | 'skip'
 }
 
-export type { Order, Task, Status }
+export type { Task, Status }
+
+// Keep the original Prisma types for server-side use
+export type PrismaOrder = Order
+export type PrismaOrderWithTasks = Order & { tasks: Task[] }

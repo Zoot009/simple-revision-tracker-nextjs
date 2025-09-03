@@ -33,7 +33,7 @@ export function AddTaskForm({ orders, onSuccess }: AddTaskFormProps) {
     defaultValues: {
       description: '',
       deadline: format(addDays(new Date(), 1), "yyyy-MM-dd'T'HH:mm"),
-      orderId: '',
+      orderId: undefined, // Changed from '' to undefined
     },
   })
 
@@ -57,12 +57,12 @@ export function AddTaskForm({ orders, onSuccess }: AddTaskFormProps) {
         throw new Error('Failed to create task')
       }
 
-    toast.success("Task created successfully")
+      toast.success("Task created successfully")
 
       form.reset()
       onSuccess?.()
     } catch (error) {
-     toast.success("Failed to create task")
+      toast.error("Failed to create task") // Fixed: was showing success on error
     } finally {
       setIsLoading(false)
     }
@@ -84,7 +84,7 @@ export function AddTaskForm({ orders, onSuccess }: AddTaskFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="">No client (General task)</SelectItem>
+                  <SelectItem value="none">No client (General task)</SelectItem>
                   {orders.map((order) => (
                     <SelectItem key={order.id} value={order.id}>
                       {order.clientName} - {order.orderId}

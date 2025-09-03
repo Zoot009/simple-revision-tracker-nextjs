@@ -6,9 +6,45 @@ import { MeetingsSection } from '@/components/dashboard/meetings-section'
 import { TasksSection } from '@/components/dashboard/tasks-section'
 import { OrdersSection } from '@/components/dashboard/orders-section'
 import { format } from 'date-fns'
+import type { OrderWithTasks, TaskWithOrder } from '@/types'
+
+// Helper function to serialize Prisma data for client components
+function serializeOrders(orders: any[]): OrderWithTasks[] {
+  return orders.map(order => ({
+    ...order,
+    amount: Number(order.amount), // Convert Decimal to number
+    tasks: order.tasks.map((task: any) => ({
+      ...task,
+      deadline: task.deadline,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
+      completedAt: task.completedAt,
+    })),
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    lastMeetingDate: order.lastMeetingDate,
+  }))
+}
+
+function serializeTasks(tasks: any[]): TaskWithOrder[] {
+  return tasks.map(task => ({
+    ...task,
+    deadline: task.deadline,
+    createdAt: task.createdAt,
+    updatedAt: task.updatedAt,
+    completedAt: task.completedAt,
+    order: task.order ? {
+      ...task.order,
+      amount: Number(task.order.amount), // Convert Decimal to number
+      createdAt: task.order.createdAt,
+      updatedAt: task.order.updatedAt,
+      lastMeetingDate: task.order.lastMeetingDate,
+    } : undefined,
+  }))
+}
 
 async function getDashboardData() {
-  const [orders, tasks] = await Promise.all([
+  const [ordersRaw, tasksRaw] = await Promise.all([
     prisma.order.findMany({
       include: { tasks: true },
       orderBy: { createdAt: 'desc' }
@@ -20,6 +56,10 @@ async function getDashboardData() {
       take: 20
     })
   ])
+
+  // Serialize the data to convert Decimal types to numbers
+  const orders = serializeOrders(ordersRaw)
+  const tasks = serializeTasks(tasksRaw)
 
   const currentTime = new Date()
   const today = format(currentTime, 'yyyy-MM-dd')
@@ -43,7 +83,7 @@ async function getDashboardData() {
     totalOrders: orders.length,
     activeOrders: orders.filter(o => o.status === 'ACTIVE').length,
     pendingTasks: tasks.length,
-    totalValue: orders.reduce((sum, order) => sum + Number(order.amount), 0),
+    totalValue: orders.reduce((sum, order) => sum + order.amount, 0), // Now order.amount is a number
     overdueMessages
   }
 
